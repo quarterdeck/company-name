@@ -70,7 +70,7 @@ class WebsiteCompanyName
         $element = $this->crawler->filter('[type="application/ld+json"]')->eq(0);
         if (count($element)) {
             $json = json_decode($element->text(), true);
-            if ($json['@type'] == 'Organization') {
+            if (isset($json['@type']) && $json['@type'] == 'Organization') {
                 return $json['name'];
             }
         }
