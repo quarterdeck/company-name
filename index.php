@@ -1,11 +1,7 @@
 <?php
 require_once __DIR__ . '/vendor/autoload.php';
 
-// use Goutte\Client;
-
 // header('Content-type:application/json;charset=utf-8');
-
-// © Copyright 2019 Stray FM, a UKRD group company
 
 class WebsiteCompanyName
 {
@@ -15,9 +11,11 @@ class WebsiteCompanyName
     protected $excluded_methods = [
         '__construct',
         'guess',
+        'split',
     ];
     public $guesses = [];
     public $domain;
+    public $sld;
     public $name;
 
     function __construct($domain)
@@ -30,18 +28,24 @@ class WebsiteCompanyName
             $this->domain = str_replace('www.', '', $parsed_domain->host);
         }
 
-        $this->name = explode('.', $this->domain)[0];
+        $this->sld = explode('.', $this->domain)[0];
+        $this->name = ucwords(str_replace('-', ' ', $this->sld));
         $this->client = new Goutte\Client();
 
-        foreach ($this->prefixes as $prefix) {
-            $this->crawler = $this->client->request('GET', $prefix . $this->domain);
-            if ($this->client->getResponse()->getStatusCode() == 200) {
-                break;
+        try {
+            foreach ($this->prefixes as $prefix) {
+                $this->crawler = $this->client->request('GET', $prefix . $this->domain);
+                if ($this->client->getResponse()->getStatusCode() == 200) {
+                    break;
+                }
             }
-        }
-
-        foreach (array_diff(get_class_methods($this), $this->excluded_methods) as $method) {
-            array_push($this->guesses, $this->{$method}());
+            foreach (array_diff(get_class_methods($this), $this->excluded_methods) as $method) {
+                foreach ($this->split($this->{$method}()) as $guess) {
+                    array_push($this->guesses, trim($guess));
+                }
+            }
+        } catch (\GuzzleHttp\Exception\ConnectException $e) {
+            echo $this->name;
         }
     }
 
@@ -53,37 +57,36 @@ class WebsiteCompanyName
         }
     }
 
-    function local_business()
-    {
-        $element = $this->crawler->filter('[itemtype="http://schema.org/LocalBusiness"] [itemprop="name"]')->eq(0);
-        if (count($element)) {
-            return $element->text();
-        }
-    }
+    // function local_business()
+    // {
+    //     $element = $this->crawler->filter('[itemtype="http://schema.org/LocalBusiness"] [itemprop="name"]')->eq(0);
+    //     if (count($element)) {
+    //         return $element->text();
+    //     }
+    // }
 
     function organization()
     {
-        $element = $this->crawler->filter('[itemtype="http://schema.org/Organization"] [itemprop="name"]')->eq(0);
+        $element = $this->crawler->filter('[type="application/ld+json"]')->eq(0);
         if (count($element)) {
-            return $element->text();
+            $json = json_decode($element->text(), true);
+            if ($json['@type'] == 'Organization') {
+                return $json['name'];
+            }
         }
     }
 
+    // function organization()
+    // {
+    //     $element = $this->crawler->filter('[itemtype="http://schema.org/Organization"] [itemprop="name"]')->eq(0);
+    //     if (count($element)) {
+    //         return $element->text();
+    //     }
+    // }
+
     function title()
     {
-        $sections = array_map(function($section){
-            return trim($section);
-        }, preg_split('/–|-|,|\\|•|:|\|/', $this->crawler->filter('title')->text()));
-
-        $scores = [];
-        foreach ($sections as $section) {
-            similar_text($this->name, $section, $similarity);
-            $scores[$section] = $similarity;
-        }
-        asort($scores);
-        $scores = array_keys($scores);
-
-        return array_pop($scores);
+        return $this->crawler->filter('title')->text();
     }
 
     function guess()
@@ -91,11 +94,25 @@ class WebsiteCompanyName
         $this->guesses = array_filter($this->guesses, function($guess){
             return !is_null($guess);
         });
-        var_dump( $this->guesses );
+        $scores = [];
+        foreach ($this->guesses as $guess) {
+            similar_text($this->sld, $guess, $score);
+            $scores[$guess] = $score;
+        }
+        asort($scores);
+        $scores = array_keys($scores);
+
+        return array_pop($scores);
+    }
+
+    function split($text)
+    {
+        return preg_split('/–|-|,|\\|•|:|\|/', $text);
     }
 }
 
-// var_dump( (new WebsiteCompanyName($_GET['url']))->name );
-(new WebsiteCompanyName($_GET['url']))->guess();
-
-// $sld = ucwords(str_replace('-', ' ', Str::before($this->url, '.')));
+if (isset($_GET['url'])) {
+    echo (new WebsiteCompanyName($_GET['url']))->guess();
+} else {
+    echo "Please provide a URL";
+}
