@@ -5,7 +5,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 class WebsiteCompanyName
 {
-    protected $prefixes = [ 'https://www.', 'https://', 'http://www.', 'http://', ];
+    protected $prefixes = [ 'http://www.', 'http://', 'https://www.', 'https://', ];
     protected $client;
     protected $crawler;
     protected $excluded_methods = [
@@ -45,6 +45,8 @@ class WebsiteCompanyName
                 }
             }
         } catch (\GuzzleHttp\Exception\ConnectException $e) {
+            echo $this->name;
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
             echo $this->name;
         }
     }
@@ -107,7 +109,7 @@ class WebsiteCompanyName
 
     function split($text)
     {
-        return preg_split('/–|-|,|\\|•|:|\|/', $text);
+        return preg_split('/–|-|,|\\|•|•|:|\|/', $text);
     }
 }
 
