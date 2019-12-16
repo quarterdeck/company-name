@@ -5,7 +5,6 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 // header('Content-type:application/json;charset=utf-8');
 
-// <meta property="og:site_name" content="Stray FM" />
 // © Copyright 2019 Stray FM, a UKRD group company
 
 class WebsiteCompanyName
@@ -100,37 +99,3 @@ class WebsiteCompanyName
 (new WebsiteCompanyName($_GET['url']))->guess();
 
 // $sld = ucwords(str_replace('-', ' ', Str::before($this->url, '.')));
-// $this->name = $sld;
-// $this->save();
-//
-//
-// try {
-//     $crawler = $client->request('GET', "http://{$this->url}");
-// } catch (ConnectException $e) {
-//     $crawler = $client->request('GET', "http://www.{$this->url}");
-// }
-//
-// if ($client->getResponse()->getStatus() == 200) {
-//     $itemprop = $crawler->filter('[itemtype="http://schema.org/LocalBusiness"] [itemprop="name"]')->eq(0);
-//     if (count($itemprop)) {
-//         $name = $itemprop->text();
-//     } else {
-//         $best_guess = (object) collect(preg_split('/–|-|\\|•|:|\|/', $crawler->filter('title')->text()))
-//             ->map(function ($item) {
-//                 return trim($item);
-//             })
-//             ->map(function ($item) use ($sld) {
-//                 similar_text($sld, $item, $similarity);
-//
-//                 return [
-//                     'text' => $item,
-//                     'score' => $similarity,
-//                 ];
-//             })
-//             ->sortByDesc('score')
-//             ->first();
-//     }
-// }
-//
-// $this->name = $best_guess->text ?? $sld;
-// $this->save();
