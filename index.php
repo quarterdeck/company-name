@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/vendor/autoload.php';
 
-// header('Content-type:application/json;charset=utf-8');
+header('Content-type:application/json;charset=utf-8');
 
 class WebsiteCompanyName
 {
@@ -10,6 +10,7 @@ class WebsiteCompanyName
     protected $crawler;
     protected $excluded_methods = [
         '__construct',
+        '__toString',
         'guess',
         'split',
     ];
@@ -45,9 +46,9 @@ class WebsiteCompanyName
                 }
             }
         } catch (\GuzzleHttp\Exception\ConnectException $e) {
-            echo $this->name;
+            array_push($this->guesses, trim($this->name));
         } catch (\GuzzleHttp\Exception\RequestException $e) {
-            echo $this->name;
+            array_push($this->guesses, trim($this->name));
         }
     }
 
@@ -72,7 +73,7 @@ class WebsiteCompanyName
         $element = $this->crawler->filter('[type="application/ld+json"]')->eq(0);
         if (count($element)) {
             $json = json_decode($element->text(), true);
-            if (isset($json['@type']) && $json['@type'] == 'Organization') {
+            if (isset($json['@type'], $json['name']) && $json['@type'] == 'Organization') {
                 return $json['name'];
             }
         }
@@ -109,12 +110,23 @@ class WebsiteCompanyName
 
     function split($text)
     {
-        return preg_split('/–|-|,|\\|•|•|:|\|/', $text);
+        return preg_split('/–|-|,|\\|•|•|:|\.|\|/', $text);
+    }
+
+    function __toString()
+    {
+        return json_encode([
+            'best_guess' => $this->guess(),
+            'guesses' => array_values(array_filter($this->guesses, function($guess){
+                return !empty($guess);
+            })),
+        ]);
     }
 }
 
 if (isset($_GET['url'])) {
-    echo (new WebsiteCompanyName($_GET['url']))->guess();
+    // print_r( (new WebsiteCompanyName($_GET['url']))->guesses );
+    echo( (new WebsiteCompanyName($_GET['url'])) );
 } else {
     echo "Please provide a URL";
 }
