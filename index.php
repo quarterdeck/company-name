@@ -49,6 +49,8 @@ class WebsiteCompanyName
             array_push($this->guesses, trim($this->name));
         } catch (\GuzzleHttp\Exception\RequestException $e) {
             array_push($this->guesses, trim($this->name));
+        } catch (\InvalidArgumentException $e) {
+            array_push($this->guesses, trim($this->name));
         }
     }
 
