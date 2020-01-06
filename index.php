@@ -35,7 +35,9 @@ class WebsiteCompanyName
 
         try {
             foreach ($this->prefixes as $prefix) {
-                $this->crawler = $this->client->request('GET', $prefix . $this->domain);
+                $this->crawler = $this->client->request('GET', $prefix . $this->domain, [
+                    'max_redirects' => 3,
+                ]);
                 if ($this->client->getResponse()->getStatusCode() == 200) {
                     break;
                 }
@@ -54,9 +56,22 @@ class WebsiteCompanyName
         }
     }
 
+    function title()
+    {
+        return $this->crawler->filter('title')->text();
+    }
+
     function og_site_name()
     {
         $element = $this->crawler->filter('meta[property="og:site_name"]')->eq(0);
+        if (count($element)) {
+            return $element->attr('content');
+        }
+    }
+
+    function og_title()
+    {
+        $element = $this->crawler->filter('meta[property="og:title"]')->eq(0);
         if (count($element)) {
             return $element->attr('content');
         }
@@ -89,16 +104,20 @@ class WebsiteCompanyName
     //     }
     // }
 
-    function title()
-    {
-        return $this->crawler->filter('title')->text();
-    }
-
     function guess()
     {
         $this->guesses = array_filter($this->guesses, function($guess){
             return !is_null($guess);
         });
+
+        $this->guesses = array_values(array_filter($this->guesses, function($guess){
+            return !empty($guess);
+        }));
+
+        if (empty($this->guesses)) {
+            array_push($this->guesses, $this->name);
+        }
+
         $scores = [];
         foreach ($this->guesses as $guess) {
             similar_text($this->sld, $guess, $score);
@@ -119,16 +138,16 @@ class WebsiteCompanyName
     {
         return json_encode([
             'best_guess' => $this->guess(),
-            'guesses' => array_values(array_filter($this->guesses, function($guess){
-                return !empty($guess);
-            })),
+            'guesses' => $this->guesses,
         ]);
     }
 }
 
-if (isset($_GET['url'])) {
+if (!empty($_GET['url'])) {
     // print_r( (new WebsiteCompanyName($_GET['url']))->guesses );
     echo( (new WebsiteCompanyName($_GET['url'])) );
 } else {
-    echo "Please provide a URL";
+    echo json_encode([
+        'error' => "Please provide a URL"
+    ]);
 }
