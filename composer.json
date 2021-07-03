@@ -1,6 +1,5 @@
 {
     "require": {
-        "fabpot/goutte": "^4.0",
-        "spatie/ray": "^1.27"
+        "fabpot/goutte": "^4.0"
     }
 }
