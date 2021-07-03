@@ -7,12 +7,6 @@ class WebsiteCompanyName
     protected $prefixes = [ 'http://www.', 'http://', 'https://www.', 'https://', ];
     protected $client;
     protected $crawler;
-    // protected $excluded_methods = [
-    //     '__construct',
-    //     '__toString',
-    //     'guess',
-    //     'split',
-    // ];
     protected $guessing_methods = [
         'title',
         'og_site_name',
@@ -113,7 +107,7 @@ class WebsiteCompanyName
 
     function copyright()
     {
-		$copyright = $this->crawler->filter('p, span, div, li')->each(function (Crawler $node, $i) {
+		$copyright = $this->crawler->filter('p, span, div, li, small')->each(function (Crawler $node, $i) {
 			if (str_contains($node->text(), '©')) {
 				return $node->text();
 			}
@@ -141,13 +135,9 @@ class WebsiteCompanyName
 
     function guess()
     {
-        $this->guesses = array_filter($this->guesses, function($guess){
-            return !is_null($guess);
-        });
-
-        $this->guesses = array_values(array_filter($this->guesses, function($guess){
-            return !empty($guess);
-        }));
+        $this->guesses = array_filter($this->guesses);
+        $this->guesses = array_unique($this->guesses);
+        $this->guesses = array_values($this->guesses);
 
         if (empty($this->guesses)) {
             array_push($this->guesses, $this->name);
