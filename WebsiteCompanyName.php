@@ -1,11 +1,13 @@
 <?php
 
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\BrowserKit\HttpBrowser;
+use Symfony\Component\HttpClient\HttpClient;
 
 class WebsiteCompanyName
 {
     protected $prefixes = [ 'http://www.', 'http://', 'https://www.', 'https://', ];
-    protected $client;
+    protected $browser;
     protected $crawler;
     protected $guessing_methods = [
         'title',
@@ -32,14 +34,14 @@ class WebsiteCompanyName
 
         $this->sld = explode('.', $this->domain)[0];
         $this->name = ucwords(str_replace('-', ' ', $this->sld));
-        $this->client = new Goutte\Client();
+        $this->browser = new HttpBrowser(HttpClient::create());
 
         try {
             foreach ($this->prefixes as $prefix) {
-                $this->crawler = $this->client->request('GET', $prefix . $this->domain, [
+                $this->crawler = $this->browser->request('GET', $prefix . $this->domain, [
                     'max_redirects' => 3,
                 ]);
-                if ($this->client->getResponse()->getStatusCode() == 200) {
+                if ($this->browser->getResponse()->getStatusCode() == 200) {
                     break;
                 }
             }
@@ -156,7 +158,7 @@ class WebsiteCompanyName
 
     function split($text)
     {
-        return preg_split('/–|-|,|\\|•|•|:|\.|\|/', $text);
+        return preg_split('/–|-|,|\\|•|•|:|\.|\|/', $text ?? '');
     }
 
     function __toString()
