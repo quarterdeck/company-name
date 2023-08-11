@@ -1,7 +1,7 @@
 {
     "require": {
         "symfony/browser-kit": "^6.3.2",
-        "symfony/http-client": "^6.3",
-        "symfony/css-selector": "^6.3"
+        "symfony/http-client": "^6.3.2",
+        "symfony/css-selector": "^6.3.2"
     }
 }
