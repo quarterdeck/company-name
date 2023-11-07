@@ -120,6 +120,10 @@ class WebsiteCompanyName
 		$copyright = str_ireplace([
 			'copyright',
 			'©',
+			'2025',
+			'2024',
+			'2023',
+			'2022',
 			'2021',
 			'2020',
 			'2019',
